@@ -4,11 +4,18 @@
 
 
 # Load packages
+import os
+from random import random
+from time import time
+from typing import OrderedDict
+from importlib_metadata import files
 import numpy as np
 import gymnasium as gym
 import torch
 from tqdm import trange
 import warnings, sys
+
+from agents.DQN_Agent import DQNAgent
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
@@ -23,18 +30,40 @@ def running_average(x, N):
         y = np.zeros_like(x)
     return y
 
+TESTING_PATH = './models/underway/'
+SOLVERS_PATH = './models/solvers/'
+FAILERS_PATH = './models/failers/'
+
 # Load model
 try:
-    model = torch.load('neural-network-1.pth')
+    ongoing_models_files = [file for file in os.listdir(TESTING_PATH) if file.endswith('.pth')]
+    print('Ongoing models found:', ongoing_models_files)
+    if len(ongoing_models_files) == 0:
+        raise FileNotFoundError
+    print('Loading model from file:', ongoing_models_files[0])
+    model = torch.load(os.path.join(TESTING_PATH, ongoing_models_files[0]), weights_only=False)
+
+    if not isinstance(model, torch.nn.Module):
+        print('Loaded file is not a valid PyTorch model.')
+        print('Converting to torch.nn.Module...')
+        try:
+            agent = DQNAgent(n_actions=4, dim_state=8)
+            agent.load_model(os.path.join(TESTING_PATH, ongoing_models_files[0]))
+            model = agent.policy_network
+            print('Conversion successful.')
+        except Exception as e:
+            print('Conversion failed:', e)
+            sys.exit(-1)
     print('Network model: {}'.format(model))
-except:
-    print('File neural-network-1.pth not found!')
+except FileNotFoundError:
+    print('File ?.pth not found in ./models/underway/')
     sys.exit(-1)
 
 # Import and initialize Mountain Car Environment
 env = gym.make('LunarLander-v3')
 # If you want to render the environment while training run instead:
 # env = gym.make('LunarLander-v3', render_mode = "human")
+
 
 env.reset()
 
@@ -84,7 +113,19 @@ print('Policy achieves an average total reward of {:.1f} +/- {:.1f} with confide
                 avg_reward,
                 confidence))
 
+
+timestamp = int(time())
+model_name = f'neural-network-{timestamp}_{avg_reward:.1f}.pth'
+
 if avg_reward - confidence >= CONFIDENCE_PASS:
     print('Your policy passed the test!')
+    torch.save(model, os.path.join(SOLVERS_PATH, model_name))
 else:
     print("Your policy did not pass the test! The average reward of your policy needs to be greater than {} with 95% confidence".format(CONFIDENCE_PASS))
+    torch.save(model, os.path.join(FAILERS_PATH, model_name))
+
+print('Model saved as {}'.format(model_name))
+
+# rename the testing file to avoid overwriting
+new_testing_name = f'neural-network-{timestamp}_{avg_reward:.1f}.tested'
+os.rename(os.path.join(TESTING_PATH, ongoing_models_files[0]), os.path.join(TESTING_PATH, new_testing_name))
