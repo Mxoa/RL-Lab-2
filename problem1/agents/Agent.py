@@ -29,6 +29,10 @@ class Agent(object):
         ''' Performs a backward pass on the network '''
         pass
 
+    def observe(self, state: np.ndarray, action: int, reward: float, next_state: np.ndarray, done: bool):
+        ''' Observe the environment '''
+        pass
+
     def describe(self):
         ''' Prints the agent's parameters '''
         print('Agent description:')

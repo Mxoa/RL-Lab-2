@@ -51,12 +51,15 @@ parser.add_argument('--batch-size', '-b', type=int, default=64, help='Minibatch 
 parser.add_argument('--replay-buffer-size', type=int, default=20000, help='Replay buffer capacity')
 parser.add_argument('--target-update-freq', type=int, default=3000, help='Target network update frequency (in steps)')
 parser.add_argument('--cutting-value', type=float, default=1.0, help='Gradient clipping / cutting value')
+parser.add_argument('--show-plot', action='store_true', help='Show training plot in real-time')
 args, _ = parser.parse_known_args()
 
 N_episodes = args.episodes
 n_ep_running_average = args.running_average
 n_actions = env.action_space.n               # Number of available actions
 dim_state = len(env.observation_space.high)  # State dimensionality
+
+SHOW_PLOT = args.show_plot
 
 # We will use these variables to compute the average episodic reward and
 # the average number of steps per episode
@@ -78,10 +81,12 @@ agent = DQNAgent(
     cutting_value=args.cutting_value
 )
 
+#agent = RandomAgent(n_actions)
+
 agent.describe()
 
 # Load pre-trained model weights (if any)
-agent.load_model('models/solvers/neural-network-1765459890_121.4.pth')
+# agent.load_model('models/solvers/neural-network-1765459890_121.4.pth')
 
 ### Training process
 
@@ -123,7 +128,7 @@ for i in EPISODES:
     episode_reward_list.append(total_episode_reward)
     episode_number_of_steps.append(t)
 
-    if i > 50:
+    if i > 50 and SHOW_PLOT:
         plt.pause(0.001)
         plt.plot(agent.step_count, running_average(episode_reward_list, n_ep_running_average)[-1], color='blue', marker='o')
 
