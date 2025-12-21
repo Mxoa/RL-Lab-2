@@ -44,7 +44,8 @@ class DQNAgent(Agent):
                  batch_size: int = 64,
                  replay_buffer_size: int = 20000,
                  target_update_freq: int = 2000,
-                 cutting_value: float = 2.0):
+                 cutting_value: float = 2.0,
+                 use_cer: bool = True):
         super(DQNAgent, self).__init__(n_actions)
         self.dim_state = dim_state
         self.discount_factor = discount_factor
@@ -56,7 +57,7 @@ class DQNAgent(Agent):
         self.batch_size = batch_size
         self.replay_buffer_size = replay_buffer_size
         self.target_update_freq = target_update_freq
-        self.CER = True
+        self.CER = use_cer
 
         self.replay_buffer = []
         self.step_count = 0

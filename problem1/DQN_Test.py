@@ -18,7 +18,7 @@ dim_state = len(env.observation_space.high)  # State dimensionality
 agent = DQNAgent(n_actions=n_actions, dim_state=dim_state, epsilon_0=0.0, epsilon_inf=0.0)
 
 
-agent.load_model('models/solvers/neural-network-1765460950_112.2.pth')
+agent.load_model('neural-network-1.pth')
 #agent = RandomAgent(n_actions=n_actions)
 
 done = False

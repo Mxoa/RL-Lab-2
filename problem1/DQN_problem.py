@@ -13,6 +13,7 @@ from agents.DQN_Agent import DQNAgent
 from agents.Random_Agent import RandomAgent
 import warnings
 import argparse
+import yaml
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.filterwarnings(
     "ignore", 
@@ -37,21 +38,29 @@ env = gym.make('LunarLander-v3')
 # env = gym.make('LunarLander-v3', render_mode = "human")
 
 
+# Lecture de la configuration depuis le fichier YAML
+
+
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file) # type de config : dict
+
+
 env.reset()
 
 parser = argparse.ArgumentParser(description="DQN Lunar Lander training parameters")
-parser.add_argument('--episodes', '-e', type=int, default=800, help='Number of episodes')
-parser.add_argument('--running-average', '-r', type=int, default=50, help='Window size for running average')
-parser.add_argument('--discount-factor', '-g', type=float, default=0.76, help='Discount factor (gamma)')
-parser.add_argument('--learning-rate', '-l', type=float, default=1e-4, help='Learning rate')
-parser.add_argument('--epsilon-0', type=float, default=0.999, help='Initial epsilon (epsilon_0)')
-parser.add_argument('--epsilon-inf', type=float, default=0.05, help='Minimum epsilon (epsilon_inf)')
-parser.add_argument('--epsilon-decay', type=float, default=0.99999, help='Epsilon decay rate')
-parser.add_argument('--batch-size', '-b', type=int, default=64, help='Minibatch size')
-parser.add_argument('--replay-buffer-size', type=int, default=20000, help='Replay buffer capacity')
-parser.add_argument('--target-update-freq', type=int, default=3000, help='Target network update frequency (in steps)')
-parser.add_argument('--cutting-value', type=float, default=1.0, help='Gradient clipping / cutting value')
-parser.add_argument('--show-plot', action='store_true', help='Show training plot in real-time')
+parser.add_argument('--episodes', '-e', type=int, default=config['episodes'], help='Number of episodes')
+parser.add_argument('--running-average', '-r', type=int, default=config['running_average'], help='Window size for running average')
+parser.add_argument('--discount-factor', '-g', type=float, default=config['discount_factor'], help='Discount factor (gamma)')
+parser.add_argument('--learning-rate', '-l', type=float, default=config['learning_rate'], help='Learning rate')
+parser.add_argument('--epsilon-0', type=float, default=config['epsilon_0'], help='Initial epsilon (epsilon_0)')
+parser.add_argument('--epsilon-inf', type=float, default=config['epsilon_inf'], help='Minimum epsilon (epsilon_inf)')
+parser.add_argument('--epsilon-decay', type=float, default=config['epsilon_decay'], help='Epsilon decay rate')
+parser.add_argument('--batch-size', '-b', type=int, default=config['batch_size'], help='Minibatch size')
+parser.add_argument('--replay-buffer-size', type=int, default=config['replay_buffer_size'], help='Replay buffer capacity')
+parser.add_argument('--target-update-freq', type=int, default=config['target_update_freq'], help='Target network update frequency (in steps)')
+parser.add_argument('--cutting-value', type=float, default=config['cutting_value'], help='Gradient clipping / cutting value')
+parser.add_argument('--show-plot', action='store_true', default=config['show_plot'], help='Show training plot in real-time')
+parser.add_argument('--cer' , action='store_true', default=config['use_cer'], help='Use Combined Experience Replay (CER)')
 args, _ = parser.parse_known_args()
 
 N_episodes = args.episodes
@@ -78,7 +87,8 @@ agent = DQNAgent(
     batch_size=args.batch_size,
     replay_buffer_size=args.replay_buffer_size,
     target_update_freq=args.target_update_freq,
-    cutting_value=args.cutting_value
+    cutting_value=args.cutting_value,
+    use_cer=args.cer
 )
 
 #agent = RandomAgent(n_actions)
@@ -104,6 +114,7 @@ for i in EPISODES:
     state = env.reset()[0]
     total_episode_reward = 0.
     t = 0
+    max_avg = 50.0
     while not (done or truncated):
         # Take a random action
         action = agent.forward(state)
@@ -144,7 +155,7 @@ for i in EPISODES:
         ))
     
     # Save the trained model
-    if running_average(episode_reward_list, n_ep_running_average)[-1] >= 50.0 and episode_reward_list[-1] >= 100.0:
+    if running_average(episode_reward_list, n_ep_running_average)[-1] >= max_avg and episode_reward_list[-1] >= 100.0:
         print("\nEnvironment solved in {} episodes!".format(i))
         agent.save_model(f'models/underway/success_whole_model_{int(time())}.pth', save_whole_model=True)
     

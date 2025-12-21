@@ -25,7 +25,7 @@ def running_average(x, N):
 
 # Load model
 try:
-    model = torch.load('neural-network-1.pth')
+    model = torch.load('neural-network-1.pth', weights_only=False) # J'ai modif cette ligne: weights_only=False
     print('Network model: {}'.format(model))
 except:
     print('File neural-network-1.pth not found!')
@@ -39,7 +39,7 @@ env = gym.make('LunarLander-v3')
 env.reset()
 
 # Parameters
-N_EPISODES = 50            # Number of episodes to run for trainings
+N_EPISODES = 500            # Number of episodes to run for trainings (j'ai pris 500 au lieu de 50)
 CONFIDENCE_PASS = 50
 
 # Reward
