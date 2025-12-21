@@ -61,6 +61,7 @@ parser.add_argument('--target-update-freq', type=int, default=config['target_upd
 parser.add_argument('--cutting-value', type=float, default=config['cutting_value'], help='Gradient clipping / cutting value')
 parser.add_argument('--show-plot', action='store_true', default=config['show_plot'], help='Show training plot in real-time')
 parser.add_argument('--cer' , action='store_true', default=config['use_cer'], help='Use Combined Experience Replay (CER)')
+parser.add_argument('--dueling', action='store_true', default=config['dueling'], help='Use Dueling Network Architecture')
 args, _ = parser.parse_known_args()
 
 N_episodes = args.episodes
@@ -88,7 +89,8 @@ agent = DQNAgent(
     replay_buffer_size=args.replay_buffer_size,
     target_update_freq=args.target_update_freq,
     cutting_value=args.cutting_value,
-    use_cer=args.cer
+    use_cer=args.cer,
+    dueling=args.dueling
 )
 
 #agent = RandomAgent(n_actions)
@@ -148,15 +150,17 @@ for i in EPISODES:
     # (episode number, total reward of the last episode, total number of Steps
     # of the last episode, average reward, average number of steps)
     EPISODES.set_description(
-        "Episode {} - Reward/Steps: {:.1f}/{} - Avg. Reward/Steps: {:.1f}/{}".format(
+        "Episode {} - Reward/Steps: {:.1f}/{} - Avg. Reward/Steps: {:.1f}/{} - eps {:.3f}".format(
         i, total_episode_reward, t,
         running_average(episode_reward_list, n_ep_running_average)[-1],
-        running_average(episode_number_of_steps, n_ep_running_average)[-1]
+        running_average(episode_number_of_steps, n_ep_running_average)[-1],
+        agent.epsilon
         ))
-    
+    avg = running_average(episode_reward_list, n_ep_running_average)[-1]
     # Save the trained model
-    if running_average(episode_reward_list, n_ep_running_average)[-1] >= max_avg and episode_reward_list[-1] >= 100.0:
+    if avg >= max_avg and episode_reward_list[-1] >= 200.0:
         print("\nEnvironment solved in {} episodes!".format(i))
+        max_avg = avg
         agent.save_model(f'models/underway/success_whole_model_{int(time())}.pth', save_whole_model=True)
     
 plt.ioff()

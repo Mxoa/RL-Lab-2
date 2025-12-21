@@ -1,4 +1,6 @@
 from agents.Agent import *
+from agents.Networks import DuelingNetwork
+
 
 class DQNAgent(Agent):
 
@@ -30,6 +32,8 @@ class DQNAgent(Agent):
             target_network (torch.nn.Module): target neural network for stable Q-value updates
             optimizer (torch.optim.Optimizer): optimizer for training the policy network
             loss_fn (torch.nn.Module): loss function for training the policy network
+            use_cer (bool): whether to use Combined Experience Replay (CER)
+            dueling (bool): whether to use Dueling Network Architecture
 
     '''
 
@@ -45,7 +49,8 @@ class DQNAgent(Agent):
                  replay_buffer_size: int = 20000,
                  target_update_freq: int = 2000,
                  cutting_value: float = 2.0,
-                 use_cer: bool = True):
+                 use_cer: bool = True,
+                 dueling: bool = False):
         super(DQNAgent, self).__init__(n_actions)
         self.dim_state = dim_state
         self.discount_factor = discount_factor
@@ -58,6 +63,7 @@ class DQNAgent(Agent):
         self.replay_buffer_size = replay_buffer_size
         self.target_update_freq = target_update_freq
         self.CER = use_cer
+        self.dueling = dueling
 
         self.replay_buffer = []
         self.step_count = 0
@@ -74,14 +80,18 @@ class DQNAgent(Agent):
             Returns:
                 model (torch.nn.Module): the neural network model
         '''
-        model = torch.nn.Sequential(
-            torch.nn.Linear(self.dim_state, 128),
-            torch.nn.ReLU(),
-            torch.nn.Linear(128, 128),
-            torch.nn.ReLU(),
-            torch.nn.Linear(128, self.n_actions)
-        )
-        return model
+        if self.dueling:
+            model = DuelingNetwork(self.dim_state, self.n_actions, 128)
+            return model
+        else:
+            model = torch.nn.Sequential(
+                torch.nn.Linear(self.dim_state, 128),
+                torch.nn.ReLU(),
+                torch.nn.Linear(128, 128),
+                torch.nn.ReLU(),
+                torch.nn.Linear(128, self.n_actions)
+            )
+            return model
     
     def forward(self, state: np.ndarray) -> int:
         ''' Compute an action using an epsilon-greedy policy
