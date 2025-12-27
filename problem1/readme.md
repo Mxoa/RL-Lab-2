@@ -8,4 +8,6 @@ DQN_problem permet de lancer un apprentissage (paramètre donnés via config.yam
 
 DQN_check_solution_in_folder_undrway permet d'aller chercher un modèle non testé dans models/underway de la tester et de la mettre dans le dossier approprié (models/solvers ou models/failers selon s'il passe le test ou pas) marche plus depuis que j'ai mis le dueling... Pour le moment tous les modèles dans solvers sont des modèles qui utilisent pas dueling et pas cer.
 
-DQN_check_solution_random_agent sert juste pour avoir le -180 de la question a.
+DQN_check_solution_random_agent sert juste pour avoir le -180 de la question **a.** (reward moyenne pour un agent aléatoire)
+
+

@@ -68,7 +68,7 @@ env = gym.make('LunarLander-v3')
 env.reset()
 
 # Parameters
-N_EPISODES = 50            # Number of episodes to run for trainings
+N_EPISODES = 150            # Number of episodes to run for trainings
 CONFIDENCE_PASS = 50
 
 # Reward
@@ -88,7 +88,9 @@ for i in EPISODES:
         # will be True if you reached the goal position,
         # False otherwise
         q_values = model(torch.tensor(state))
-        _, action = torch.max(q_values, dim=0)
+        #print('q_values from model:', q_values)
+        _, action = torch.max(q_values, dim=1)
+        temp = env.step(action.item())
         next_state, reward, done, truncated, _ = env.step(action.item())
 
         # Update episode reward

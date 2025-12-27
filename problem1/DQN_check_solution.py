@@ -59,7 +59,11 @@ for i in EPISODES:
         # will be True if you reached the goal position,
         # False otherwise
         q_values = model(torch.tensor(state))
-        _, action = torch.max(q_values, dim=0)
+        # Si la taille c'est (n_actions, 1), on peut faire dim=0 sinon dim=1
+        if q_values.dim() > 1:
+            _, action = torch.max(q_values, dim=1)
+        else:
+            _, action = torch.max(q_values, dim=0)
         next_state, reward, done, truncated, _ = env.step(action.item())
 
         # Update episode reward
