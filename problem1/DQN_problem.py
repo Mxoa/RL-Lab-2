@@ -164,11 +164,12 @@ for i in EPISODES:
         agent.save_model(f'models/underway/success_whole_model_{int(time())}.pth', save_whole_model=True)
     
 plt.ioff()
-plt.show()
+if args.show_plot:
+    plt.show()
 
 
 # Save the trained model
-agent.save_model(f'models/underway/whole_model_{int(time())}.pth', save_whole_model=True)
+agent.save_model(f'models/underway/whole_model_{int(time())}_gamma_{args.discount_factor}.pth', save_whole_model=True)
 
 # Close environment
 env.close()
@@ -192,6 +193,38 @@ ax[1].set_ylabel('Total number of steps')
 ax[1].set_title('Total number of steps vs Episodes')
 ax[1].legend()
 ax[1].grid(alpha=0.3)
-plt.show()
 
+timestamp = int(time())
+plt.savefig(f'plots/results_gamma_{args.discount_factor}_buffer_{args.replay_buffer_size}_{timestamp}.png')
+print(f"Graphique sauvegardé sous le nom : results_gamma_{args.discount_factor}...")
 
+if SHOW_PLOT:
+    plt.show()
+plt.close()
+
+import pandas as pd
+import os
+
+# On crée un nom de fichier basé sur les paramètres clés
+filename = f"results_gamma{args.discount_factor}_mem{args.replay_buffer_size}_eps{args.episodes}.csv"
+
+# Création du dossier 'data' si inexistant
+if not os.path.exists("data_experiments"):
+    os.makedirs("data_experiments")
+
+path = os.path.join("data_experiments", filename)
+
+df = pd.DataFrame({
+    'episode': range(len(episode_reward_list)),
+    'reward': episode_reward_list,
+    'running_avg': running_average(episode_reward_list, n_ep_running_average),
+    'steps': episode_number_of_steps
+})
+
+df.to_csv(path, index=False)
+print(f"Données sauvegardées dans : {path}")
+
+# On désactive le plt.show() bloquant si on n'a pas demandé explicitement l'affichage
+if SHOW_PLOT:
+    plt.show()
+plt.close()

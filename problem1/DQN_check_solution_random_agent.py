@@ -37,7 +37,7 @@ agent = RandomAgent(n_actions=env.action_space.n)
 env.reset()
 
 # Parameters
-N_EPISODES = 5000            # Number of episodes to run for trainings (j'ai pris 5000 au lieu de 50)
+N_EPISODES = 50            # Number of episodes to run for trainings (j'ai pris 5000 au lieu de 50)
 CONFIDENCE_PASS = 50
 
 # Reward

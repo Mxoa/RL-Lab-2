@@ -19,7 +19,7 @@ agent = DQNAgent(n_actions=n_actions, dim_state=dim_state, epsilon_0=0.0, epsilo
 
 
 #agent.load_model('neural-network-1.pth')
-agent.load_model('models/underway/whole_model_1766695874.pth', load_whole_model=True)
+agent.load_model('models/underway/success_whole_model_1766679639.pth', load_whole_model=True)
 #agent = RandomAgent(n_actions=n_actions)
 
 done = False

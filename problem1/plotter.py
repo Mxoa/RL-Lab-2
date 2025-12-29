@@ -22,7 +22,7 @@ def try_load_model(path: str):
     il est renvoyé. Si c'est un state_dict, on reconstruit un MLP simple
     en inférant les tailles depuis les poids.
     """
-    obj = torch.load(path, map_location="cpu")
+    obj = torch.load(path, map_location="cpu", weights_only=False)
     if isinstance(obj, nn.Module):
         return obj
 

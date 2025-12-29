@@ -10,5 +10,5 @@ replay_buffer_size: 20000
 target_update_freq: 312
 cutting_value: 0.9
 use_cer: true
-show_plot: true
+show_plot: false
 dueling: true

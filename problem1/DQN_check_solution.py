@@ -39,7 +39,7 @@ env = gym.make('LunarLander-v3')
 env.reset()
 
 # Parameters
-N_EPISODES = 500            # Number of episodes to run for trainings (j'ai pris 500 au lieu de 50)
+N_EPISODES = 50            # Number of episodes to run for trainings (j'ai pris 500 au lieu de 50)
 CONFIDENCE_PASS = 50
 
 # Reward
