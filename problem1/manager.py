@@ -19,22 +19,22 @@ plt.rcParams.update({
     'figure.titlesize': 13
 })
 
-# === CONFIGURATION DES EXPÉRIENCES (pour la question e)===
+# === EXPERIMENT CONFIGURATION (for question e) ===
 scenarios = [
-    # (1) Le Baseline (gamma0)
+    # (1) Baseline (gamma0)
     {"args": ["--discount-factor", "0.98", "--replay-buffer-size", "20000", "--episodes", "800"], "id": "Baseline"},
     
-    # (2) Variations de Gamma
+    # (2) Gamma variations
     {"args": ["--discount-factor", "1.0", "--replay-buffer-size", "20000", "--episodes", "800"], "id": "Gamma_1.0"},
     {"args": ["--discount-factor", "0.5", "--replay-buffer-size", "20000", "--episodes", "800"], "id": "Gamma_0.5"},
 
-    # (3) Variations de Mémoire (Replay Buffer)
+    # (3) Replay Buffer size variations
     {"args": ["--discount-factor", "0.98", "--replay-buffer-size", "500", "--episodes", "800"], "id": "Buffer_500"},
     {"args": ["--discount-factor", "0.98", "--replay-buffer-size", "1000", "--episodes", "800"], "id": "Buffer_1000"},
     {"args": ["--discount-factor", "0.98", "--replay-buffer-size", "20000", "--episodes", "800"], "id": "Buffer_20000"},
     {"args": ["--discount-factor", "0.98", "--replay-buffer-size", "50000", "--episodes", "800"], "id": "Buffer_50000"},
     
-    # (3) Variations d'Épisodes
+    # (4) Episodes variations
     {"args": ["--discount-factor", "0.98", "--replay-buffer-size", "20000", "--episodes", "200"], "id": "Episodes_200"},
     {"args": ["--discount-factor", "0.98", "--replay-buffer-size", "20000", "--episodes", "400"], "id": "Episodes_400"},
     {"args": ["--discount-factor", "0.98", "--replay-buffer-size", "20000", "--episodes", "800"], "id": "Episodes_800"},
@@ -42,10 +42,10 @@ scenarios = [
 ]
 
 PYTHON_EXE = sys.executable
-SCRIPT_NAME = "DQN_problem.py" 
+SCRIPT_NAME = "problem_1.py" 
 
 def get_value(args_list, flag):
-    """Récupère la valeur d'un flag dans la liste d'arguments"""
+    """Retrieves the value of a flag in the arguments list"""
     try:
         return args_list[args_list.index(flag) + 1]
     except (ValueError, IndexError):
@@ -57,10 +57,10 @@ def run_simulation(scenario):
     subprocess.run(cmd, check=True)
 
 def get_latest_csv(scenario):
-    """Trouve le fichier CSV correspondant aux paramètres du scénario"""
+    """Finds the CSV file corresponding to the scenario parameters"""
     args = scenario["args"]
     
-    # On récupère les valeurs pour reconstruire le nom de fichier
+    # Retrieve values to reconstruct the filename
     gamma = float(get_value(args, "--discount-factor"))
     eps = int(get_value(args, "--episodes"))
     mem = int(get_value(args, "--replay-buffer-size"))
@@ -142,9 +142,9 @@ def plot_comparison(title, scenario_ids, output_dir="plots", running_avg_window=
 
 # --- MAIN ---
 if __name__ == "__main__":
-    # 1. Lancer toutes les simulations
-    # Note : j'ai rajouté explicitement tous les paramètres dans chaque scénario 
-    # pour éviter les erreurs de recherche de fichiers.
+    # 1. Run all simulations
+    # Note: All parameters have been explicitly added to each scenario
+    # to avoid file search errors.
     # COMMENTED OUT: Simulations are already run, using existing CSV data
     # for sc in scenarios:
     #     run_simulation(sc)

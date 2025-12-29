@@ -1,13 +1,75 @@
-Le fichier config.yaml règle les paramètres, l'agent DQN est dans le fichier DQN_Agent.py. 
+# Problem 1: Deep Q-Network (DQN) for Lunar Lander
 
-DQN_check_solution est le fichier donné dans le TP
+This directory contains the implementation and analysis tools for training and evaluating a DQN agent on the Lunar Lander environment.
 
-DQN_Test permet de visualiser une simulation étant donné un modèle
+## Main Files
 
-DQN_problem permet de lancer un apprentissage (paramètre donnés via config.yaml), il sauvegarde le modele a la fin de la periode d'apprentissage et il peut sauvegarder un modele pendant l'apprentissage si la moyenne des 50 dernieres rewards est >= 50. Les modèles sont sauvés dans models/underway
+### `problem_1.py`
+Main training script for the DQN agent. This script:
+- Loads configuration parameters from `config.yaml`
+- Trains a DQN agent on the Lunar Lander environment
+- Saves the trained model at the end of training in `models/underway/`
+- Automatically saves models during training if the average reward over the last 50 episodes is ≥ 50
+- Generates training plots and saves experimental data to CSV files in `data_experiments/`
 
-DQN_check_solution_in_folder_undrway permet d'aller chercher un modèle non testé dans models/underway de la tester et de la mettre dans le dossier approprié (models/solvers ou models/failers selon s'il passe le test ou pas) marche plus depuis que j'ai mis le dueling... Pour le moment tous les modèles dans solvers sont des modèles qui utilisent pas dueling et pas cer.
+### `manager.py`
+Script for managing and comparing multiple training experiments. This script:
+- Runs multiple training scenarios with different hyperparameters (discount factor, replay buffer size, number of episodes)
+- Generates comparison plots showing the impact of different hyperparameters
+- Creates side-by-side plots for average reward and average number of steps per episode
+- Saves plots in the `plots/` directory with LaTeX-friendly formatting
+- Uses existing CSV data from previous training runs
 
-DQN_check_solution_random_agent sert juste pour avoir le -180 de la question **a.** (reward moyenne pour un agent aléatoire)
+### `plotter.py`
+Visualization tool for analyzing trained DQN models. This script:
+- Generates 3D surface plots of the learned Q-value function
+- Visualizes the optimal policy by plotting the action selection over state space
+- Creates two types of plots:
+  - **Value plot**: Maximum Q-values across the state space (y, omega)
+  - **Action plot**: Optimal action selection across the state space
+- Saves plots to `plots/value_plot.png` and `plots/action_plot.png`
+
+## Supporting Files
+
+### `DQN_check_solution.py`
+Evaluation script provided in the assignment. Tests a trained model over 50 episodes and reports whether it passes the performance threshold (average reward ≥ 50 with 95% confidence).
+
+### `DQN_Test.py`
+Interactive visualization tool that allows you to watch a trained agent perform in the Lunar Lander environment with rendering enabled.
+
+### `DQN_check_solution_random_agent.py`
+Baseline evaluation script that tests a random agent to establish the baseline performance (used for question a).
+
+### `DQN_check_solution_in_forlder_underway.py`
+Automated testing script that:
+- Finds untested models in `models/underway/`
+- Evaluates their performance
+- Moves them to `models/solvers/` if they pass the test, or `models/failers/` if they fail
+
+## Configuration
+
+All training parameters are configured in `config.yaml`, including:
+- Number of episodes
+- Discount factor (gamma)
+- Learning rate
+- Epsilon-greedy exploration parameters
+- Batch size and replay buffer size
+- Target network update frequency
+- Gradient clipping value
+- Use of Combined Experience Replay (CER) and Dueling Network Architecture
+
+## Directory Structure
+
+```
+problem1/
+├── agents/              # Agent implementations (DQN, Random)
+├── models/              # Saved models
+│   ├── solvers/        # Models that passed the test
+│   ├── failers/       # Models that failed the test
+│   └── underway/      # Models currently being tested
+├── data_experiments/   # CSV files with training data
+├── plots/              # Generated plots and visualizations
+└── config.yaml        # Configuration file
+```
 
 

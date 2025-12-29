@@ -1,175 +1,122 @@
+#!/usr/bin/env python3
 import argparse
 import re
 from pathlib import Path
 import numpy as np
 import torch
-
-#!/usr/bin/env python3
-# plotter.py
-# Charge un modèle PyTorch (fichier 'neural-network-1.pth') puis trace une surface 3D
-# de l'action en fonction de la hauteur y et de l'angle theta.
-# Usage: python plotter.py --path neural-network-1.pth
-
-
-import matplotlib.pyplot as plt
 import torch.nn as nn
-from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 -- required for 3D projection
-
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 def try_load_model(path: str):
-    """
-    Essaie de charger le fichier .pth. Si le fichier contient un objet nn.Module
-    il est renvoyé. Si c'est un state_dict, on reconstruit un MLP simple
-    en inférant les tailles depuis les poids.
-    """
+    """Loads the PyTorch model and handles state_dict or nn.Module."""
     obj = torch.load(path, map_location="cpu", weights_only=False)
     if isinstance(obj, nn.Module):
         return obj
 
-    # si c'est un dictionnaire de checkpoint
     if isinstance(obj, dict):
-        # certains checkpoints encapsulent le state_dict sous la clé 'state_dict'
-        if "state_dict" in obj:
-            sd = obj["state_dict"]
-        else:
-            sd = obj
-
-        # si sd contient des clés comme 'module.' découper le préfixe commun
+        sd = obj["state_dict"] if "state_dict" in obj else obj
         keys = list(sd.keys())
-        if not keys:
-            raise RuntimeError("state_dict vide")
-
-        # enlever préfixe common (ex: 'module.' ou 'net.')
-        prefix = None
-        m = re.match(r"^(.*?)(\d+\.weight)$", keys[0])
-        if m:
-            # pas de préfixe si déjà direct
-            prefix = ""
-        else:
-            # trouver le plus petit préfix qui rend tous les keys similaires
-            # heuristique: si keys start with same token like 'module.'
-            common = None
-            for k in keys:
-                parts = k.split(".")
-                if common is None:
-                    common = parts[0]
-                elif common != parts[0]:
-                    common = ""
-                    break
-            prefix = (common + ".") if common else ""
-
-        # récupérer toutes les weight keys triées d'apparition
+        
+        # Infer simple MLP structure if necessary
         weight_keys = [k for k in keys if k.endswith(".weight")]
         weight_keys.sort()
         sizes = []
         for k in weight_keys:
             w = sd[k]
-            if w.ndim != 2:
-                # ignorer conv ou autres ; on ne gère que couches lineaires
-                continue
-            sizes.append((w.shape[1], w.shape[0]))  # (in, out) -> we'll transpose to (in,out)
+            if w.ndim == 2:
+                sizes.append((w.shape[1], w.shape[0]))
 
-        if not sizes:
-            raise RuntimeError("Aucune couche linéaire détectée dans le state_dict.")
-
-        # construire un MLP basé sur sizes déduites
         layers = []
         for i, (in_dim, out_dim) in enumerate(sizes):
             layers.append(nn.Linear(in_dim, out_dim))
-            # ajouter activation si pas dernière couche
             if i < len(sizes) - 1:
                 layers.append(nn.ReLU())
 
         model = nn.Sequential(*layers)
-        # tenter de charger le state_dict
-        try:
-            model.load_state_dict(sd, strict=False)
-        except Exception:
-            # mapping heuristique : construire nouveau dict compatible
-            new_sd = {}
-            model_keys = list(model.state_dict().keys())
-            sd_items = [sd[k] for k in weight_keys] + []
-            # fallback: charger par correspondance d'ordre pour les weights et biases
-            sd_values = []
-            for k in keys:
-                if k.endswith(".weight") or k.endswith(".bias"):
-                    sd_values.append(sd[k])
-            # assigner dans l'ordre
-            for k, v in zip(model_keys, sd_values):
-                new_sd[k] = v
-            model.load_state_dict(new_sd, strict=False)
+        model.load_state_dict(sd, strict=False)
         return model
+    raise RuntimeError("Unsupported file format.")
 
-    raise RuntimeError("Format de fichier non supporté pour le chargement du modèle.")
-
-
-def evaluate_grid(model, y_vals, theta_vals, device="cpu"):
+def evaluate_grid(model, y_vals, omega_vals, mode="value", device="cpu"):
     """
-    Évalue le modèle sur une grille (y, theta).
-    On suppose que l'entrée du modèle est [y, theta] dans cet ordre.
-    Si le modèle renvoie plusieurs valeurs, on prend la première composante.
+    Evaluates the model on a grid (y, omega).
+    The state vector sent is [0, y, 0, 0, omega, 0, 0, 0].
     """
     model.to(device)
     model.eval()
-    Y, T = np.meshgrid(y_vals, theta_vals, indexing="xy")
-    pts = np.stack([Y.ravel(), T.ravel()], axis=1).astype(np.float32)
+    Y, O = np.meshgrid(y_vals, omega_vals, indexing="xy")
+    
+    # Prepare 8-D state vector for Lunar Lander
+    num_pts = Y.size
+    pts_8d = np.zeros((num_pts, 8), dtype=np.float32)
+    pts_8d[:, 1] = Y.ravel()     # Height y
+    pts_8d[:, 4] = O.ravel()     # Angle omega (rad)
+    
     with torch.no_grad():
-        inp = torch.from_numpy(pts).to(device)
-        try:
-            out = model(inp)
-        except Exception as e:
-            # tenter avec transpose si modèle attend (batch, features) mais features inversées
-            inp2 = inp[:, [1, 0]]
-            out = model(inp2)
-        if isinstance(out, tuple) or isinstance(out, list):
-            out = out[0]
-        out = out.cpu().numpy()
-    # si sortie multi-dim, prendre première composante
-    if out.ndim == 2 and out.shape[1] > 1:
-        out = out[:, 0]
+        inp = torch.from_numpy(pts_8d).to(device)
+        q_values = model(inp)
+        
+        if mode == "value":
+            # Plot (1): Maximum state value
+            res = torch.max(q_values, dim=1)[0]
+        else:
+            # Plot (2): Optimal action (index 0 to 3)
+            res = torch.argmax(q_values, dim=1)
+            
+        out = res.cpu().numpy()
+    
     Z = out.reshape(Y.shape)
-    return Y, T, Z
+    return Y, O, Z
 
-
-def plot_surface(Y, T, Z, title="Action en fonction de y et theta", save_to=None):
-    fig = plt.figure(figsize=(8, 6))
+def plot_surface(Y, O, Z, title, z_label, save_to=None):
+    fig = plt.figure(figsize=(10, 7))
     ax = fig.add_subplot(111, projection="3d")
-    surf = ax.plot_surface(Y, T, Z, cmap="viridis", edgecolor="none", alpha=0.9)
-    ax.set_xlabel("y (hauteur)")
-    ax.set_ylabel("theta (angle, rad)")
-    ax.set_zlabel("action (sortie du modèle)")
+    
+    cmap = "viridis"
+    
+    surf = ax.plot_surface(Y, O, Z, cmap=cmap, edgecolor='none', alpha=0.9)
+    
+    ax.set_xlabel("Y (Height)")
+    ax.set_ylabel("Omega (Angle, radians)")
+    ax.set_zlabel(z_label)
     ax.set_title(title)
-    fig.colorbar(surf, shrink=0.6, aspect=12)
+    
+    if "Value" in title:
+        fig.colorbar(surf, shrink=0.6, aspect=12)
+    
+    # Adjust view to match captures
+    ax.view_init(elev=20, azim=-60)
+    
     if save_to:
         fig.savefig(save_to, dpi=200, bbox_inches="tight")
+        print(f"Plot saved to: {save_to}")
     else:
         plt.show()
 
-
 def main():
-    parser = argparse.ArgumentParser(description="Trace l'action d'un réseau sur une grille (y, theta).")
-    parser.add_argument("--path", type=str, default="neural-network-1.pth", help="chemin vers le .pth")
-    parser.add_argument("--ymin", type=float, default=-1.0)
-    parser.add_argument("--ymax", type=float, default=1.0)
-    parser.add_argument("--ny", type=int, default=121)
-    parser.add_argument("--thetamin", type=float, default=-3.14159)
-    parser.add_argument("--thetamax", type=float, default=3.14159)
-    parser.add_argument("--ntheta", type=int, default=121)
-    parser.add_argument("--save", type=str, default=None, help="fichier de sortie PNG (optionnel)")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--path", type=str, default="neural-network-1.pth")
+    parser.add_argument("--ymin", type=float, default=0.0)      # According to problem statement
+    parser.add_argument("--ymax", type=float, default=1.5)      # According to problem statement
+    parser.add_argument("--thetamin", type=float, default=-np.pi)
+    parser.add_argument("--thetamax", type=float, default=np.pi)
     args = parser.parse_args()
 
-    path = Path(args.path)
-    if not path.exists():
-        raise FileNotFoundError(f"Fichier introuvable: {args.path}")
+    model = try_load_model(args.path)
 
-    model = try_load_model(str(path))
+    y_vals = np.linspace(args.ymin, args.ymax, 100)
+    omega_vals = np.linspace(args.thetamin, args.thetamax, 100)
 
-    y_vals = np.linspace(args.ymin, args.ymax, args.ny)
-    theta_vals = np.linspace(args.thetamin, args.thetamax, args.ntheta)
+    # 1. Generate Value Plot (max Q)
+    print("Generating value surface (V-shape)...")
+    Y, O, Z_val = evaluate_grid(model, y_vals, omega_vals, mode="value")
+    plot_surface(Y, O, Z_val, "DQN Policy Visualization - Max Q-values", "Q-values", save_to="plots/value_plot.png")
 
-    Y, T, Z = evaluate_grid(model, y_vals, theta_vals, device="cpu")
-    plot_surface(Y, T, Z, save_to=args.save)
-
+    # 2. Generate Action Plot (argmax Q)
+    print("Generating action surface (Policy)...")
+    Y, O, Z_act = evaluate_grid(model, y_vals, omega_vals, mode="action")
+    plot_surface(Y, O, Z_act, "DQN Policy Visualization - Optimal Action", "Action Index", save_to="plots/action_plot.png")
 
 if __name__ == "__main__":
     main()
