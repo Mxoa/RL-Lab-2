@@ -2,6 +2,10 @@
 # Licensed under the Educational Community License, Version 2.0 (ECL-2.0)
 # This file is part of the Computer Lab 2 for EL2805 - Reinforcement Learning.
 
+# Claire Binet-Tarbé de Vauxclairs (20020701-T842)
+# Marceau Messaussier (20030805-T390)
+
+
 # Load packages
 from time import time
 import numpy as np

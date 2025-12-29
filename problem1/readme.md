@@ -1,3 +1,6 @@
+# Claire Binet-Tarbé de Vauxclairs (20020701-T842)
+# Marceau Messaussier (20030805-T390)
+
 # Problem 1: Deep Q-Network (DQN) for Lunar Lander
 
 This directory contains the implementation and analysis tools for training and evaluating a DQN agent on the Lunar Lander environment.
