@@ -4,8 +4,8 @@ import gymnasium as gym
 import torch
 import matplotlib.pyplot as plt
 from tqdm import trange
-from agents.DQN_Agent import DQNAgent
-from agents.Random_Agent import RandomAgent
+from DQN_Agent import DQNAgent
+from Random_Agent import RandomAgent
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 

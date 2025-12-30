@@ -15,7 +15,7 @@ import torch
 from tqdm import trange
 import warnings, sys
 
-from agents.DQN_Agent import DQNAgent
+from DQN_Agent import DQNAgent
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 

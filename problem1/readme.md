@@ -32,6 +32,24 @@ Visualization tool for analyzing trained DQN models. This script:
   - **Action plot**: Optimal action selection across the state space
 - Saves plots to `plots/value_plot.png` and `plots/action_plot.png`
 
+## Agent Implementations
+
+### `Agent.py`
+Base agent class that provides the interface for all agents. Defines the common methods: `forward()`, `backward()`, `observe()`, and `describe()`.
+
+### `DQN_Agent.py`
+Deep Q-Network agent implementation. This class:
+- Implements the DQN algorithm with experience replay
+- Supports epsilon-greedy exploration policy
+- Includes optional features: Combined Experience Replay (CER) and Dueling Network Architecture
+- Provides methods for saving and loading trained models
+
+### `Random_Agent.py`
+Random agent implementation used as a baseline. Selects actions uniformly at random from the available action space.
+
+### `Networks.py`
+Neural network architectures used by the DQN agent, including the Dueling Network Architecture implementation.
+
 ## Supporting Files
 
 ### `DQN_check_solution.py`
@@ -65,13 +83,20 @@ All training parameters are configured in `config.yaml`, including:
 
 ```
 problem1/
-├── agents/              # Agent implementations (DQN, Random)
-├── models/              # Saved models
+├── Agent.py            # Base agent class
+├── DQN_Agent.py        # DQN agent implementation
+├── Random_Agent.py      # Random agent implementation
+├── Networks.py         # Neural network architectures
+├── problem_1.py        # Main training script
+├── manager.py          # Experiment management script
+├── plotter.py          # Visualization tools
+├── models/             # Saved models
 │   ├── solvers/        # Models that passed the test
 │   ├── failers/       # Models that failed the test
 │   └── underway/      # Models currently being tested
 ├── data_experiments/   # CSV files with training data
 ├── plots/              # Generated plots and visualizations
+├── neural-network-1.pth  # Trained Q-network for problem 1
 └── config.yaml        # Configuration file
 ```
 

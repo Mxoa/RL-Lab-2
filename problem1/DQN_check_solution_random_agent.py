@@ -10,7 +10,7 @@ import torch
 from tqdm import trange
 import warnings, sys
 
-from agents.Random_Agent import RandomAgent
+from Random_Agent import RandomAgent
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
